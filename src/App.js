@@ -1,63 +1,93 @@
-import React, { useState, useEffect } from "react";
-import "./App.css";
+import React, { useState, useEffect } from 'react';
+// import './style/RickAndMorty.css';
 
-function App() {
-  const [listCharacters, setListCharacter] = useState();
-  // console.log(listCharacters);
-  const [selectedCharacter, setSelectedCharacter] = useState();
-  // Fetch promises
-  const initialUrl = "https://rickandmortyapi.com/api/character";
-  const fetchCharacter = (url) => {
-    fetch(url)
-      .then((response) => response.json())
-      .then((data) => {
-        const personajes = data.results;
-        setListCharacter(personajes);
-      })
-      .catch((err) => console.log(err));
-  };
-  //
+const RickAndMorty = () => {
+  const [characters, setCharacters] = useState([]); //itera el array de objetos
+  const [character, setCharacter] = useState(''); // obtiene el valor (por id) del personaje
+  const [characterSelected, setCharacterSelected] = useState({}); //devuelve el valor de un personaje
+  const [loading, setLoading] = useState(false);
+  // const [state, setState] = useState({
+  //   characters: [],
+  //   character: '',
+  //   characterSelected: {},
+  // });
+
   useEffect(() => {
-    fetchCharacter(initialUrl);
+    apiFetch();
   }, []);
-  // Submit & filter
-  const submitHandler = (e) => {
-    e.preventDefault();
-    const characterId = e.target.value;
-    const selectedCharacter = listCharacters.filter(
-      (character) => character.id === characterId
-    )[0];
-    setSelectedCharacter(selectedCharacter);
+
+  useEffect(() => {
+    showUpCharacter();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [character]);
+
+  const apiFetch = async () => {
+    setLoading(true);
+    const api = await fetch('https://rickandmortyapi.com/api/character');
+    const res = await api.json();
+    setLoading(false);
+    setCharacters(res.results);
+    // setState({...state, characters: res.results});
+  };
+
+  const showUpCharacter = async () => {
+    if (characterSelected !== '') {
+      setLoading(true);
+      const api = await fetch(
+        `https://rickandmortyapi.com/api/character/${character}`
+      );
+      const res = await api.json();
+      setLoading(false);
+      setCharacterSelected(res);
+    }
   };
 
   return (
-    <div className="App">
-      <h1>Rick and Morty App</h1>
-      <select onChange={(e) => submitHandler(e)} name="select" id="select">
-        <option value="">-- Select a Character --</option>
-        {listCharacters &&
-          listCharacters.map((personaje) => (
-            <option key={personaje.id} value={personaje.id}>
-              {personaje.name}
+    <div className='cardContainer'>
+      <h2>Rick and Morty App</h2>
+      {loading ? (
+        <p>Loading...</p>
+      ) : (
+        <select
+          value={character}
+          onChange={(e) => setCharacter(e.target.value)}>
+          <option value=''>- Select character -</option>
+          {characters.map((character) => (
+            <option value={character.id} key={character.id}>
+              {character.name}
             </option>
           ))}
-      </select>
-      {selectedCharacter && (
-        <div className="card">
-          <img src={selectedCharacter.image} alt="Imagen" />
-          <div className="info">
-            <h3>{selectedCharacter.name}</h3>
-            <p>
-              Species: <strong>{selectedCharacter.species} </strong>
-            </p>
-            <p>
-              Status: <strong>{selectedCharacter.status}</strong>
-            </p>
-          </div>
-        </div>
+        </select>
       )}
+      <div>
+        {characterSelected?.name ? (
+          <div className='targetContainer'>
+            {loading ? (
+              <p>Loading...</p>
+            ) : (
+              <>
+                <img
+                  src={characterSelected.image}
+                  alt={characterSelected.name}
+                />
+                <div className='targetText'>
+                  <h3>{characterSelected.name}</h3>
+                  <p>
+                    species: <b>{characterSelected.species}</b>
+                  </p>
+                  <p>
+                    status: <b>{characterSelected.status}</b>
+                  </p>
+                </div>
+              </>
+            )}
+          </div>
+        ) : (
+          <p>Seleccione un personaje</p>
+        )}
+      </div>
     </div>
   );
-}
+};
 
-export default App;
+export default RickAndMorty;
